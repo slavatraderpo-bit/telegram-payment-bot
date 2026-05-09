@@ -11,7 +11,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
 # ВСТАВЬ СЮДА FILE_ID ВИДЕО
-VIDEO_FILE_ID = "AgADYh0AA6cAAVA"
+VIDEO_FILE_ID = "AAMCBAADGQEDFtTzaf-XKDvZ5DR8RqUKX_RiMeXo_msAAmIdAAOnAAFQAAFIJpB3XV-rAQAHbQADOwQ"
 
 # Кнопка
 start_kb = InlineKeyboardMarkup()
