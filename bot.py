@@ -48,18 +48,18 @@ PAYMENTS = {
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-menu = ReplyKeyboardMarkup(
-    resize_keyboard=True
-)
+menu = ReplyKeyboardMarkup(resize_keyboard=True)
 
 for key in PAYMENTS.keys():
     menu.add(KeyboardButton(key))
 
-menu.add(
-    KeyboardButton("Я оплатил")
-)
+menu.add(KeyboardButton("Я оплатил"))
 
-payment_requests = {}
+# Пользователи ожидающие отправку оплаты
+waiting_payment = {}
+
+# Связь заявки с user_id
+admin_requests = {}
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
@@ -86,12 +86,10 @@ async def payment_method(message: types.Message):
 
     await message.answer(text)
 
-@dp.message_handler(
-    lambda message: message.text == "Я оплатил"
-)
+@dp.message_handler(lambda message: message.text == "Я оплатил")
 async def paid(message: types.Message):
 
-    payment_requests[message.from_user.id] = True
+    waiting_payment[message.from_user.id] = True
 
     await message.answer(
         "Отправьте:\n"
@@ -99,59 +97,75 @@ async def paid(message: types.Message):
         "- ссылку или номер заявки"
     )
 
-@dp.message_handler(content_types=types.ContentTypes.ANY)
+@dp.message_handler(
+    content_types=[
+        types.ContentType.TEXT,
+        types.ContentType.PHOTO
+    ]
+)
 async def get_payment(message: types.Message):
 
-    if message.from_user.id in payment_requests:
+    # Проверяем ожидаем ли оплату
+    if message.from_user.id not in waiting_payment:
+        return
 
-        username = message.from_user.username
-        user_id = message.from_user.id
+    username = message.from_user.username
+    user_id = message.from_user.id
 
-        admin_message = await bot.send_message(
+    admin_text = (
+        f"НОВАЯ ЗАЯВКА\n\n"
+        f"Username: @{username}\n"
+        f"User ID: {user_id}\n\n"
+        f"Ответьте REPLY командой:\n\n"
+        f"/ok\n"
+        f"/wait\n"
+        f"/fail"
+    )
+
+    admin_message = await bot.send_message(
+        ADMIN_ID,
+        admin_text
+    )
+
+    # Сохраняем связь message_id -> user_id
+    admin_requests[
+        admin_message.message_id
+    ] = user_id
+
+    # Если фото
+    if message.photo:
+
+        await bot.send_photo(
             ADMIN_ID,
-            f"""
-НОВАЯ ЗАЯВКА
-
-Username: @{username}
-User ID: {user_id}
-
-Ответьте reply-командой:
-
-/ok
-/wait
-/fail
-"""
+            message.photo[-1].file_id,
+            caption="Скрин оплаты"
         )
 
-        payment_requests[admin_message.message_id] = user_id
+    # Если текст
+    if message.text:
 
-        if message.photo:
-
-            await bot.send_photo(
-                ADMIN_ID,
-                message.photo[-1].file_id
-            )
-
-        if message.text:
-
-            await bot.send_message(
-                ADMIN_ID,
-                f"Текст:\n{message.text}"
-            )
-
-        await message.answer(
-            "Заявка отправлена ✅"
+        await bot.send_message(
+            ADMIN_ID,
+            f"Текст:\n{message.text}"
         )
 
-        del payment_requests[message.from_user.id]
+    await message.answer(
+        "Заявка отправлена ✅"
+    )
 
+    # Удаляем из ожидания
+    del waiting_payment[
+        message.from_user.id
+    ]
+
+# ПОДТВЕРЖДЕНИЕ
 @dp.message_handler(commands=["ok"])
 async def approve(message: types.Message):
 
     if not message.reply_to_message:
         return
 
-    user_id = payment_requests.get(
+    user_id = admin_requests.get(
         message.reply_to_message.message_id
     )
 
@@ -165,15 +179,18 @@ async def approve(message: types.Message):
         f"{CHANNEL_LINK}"
     )
 
-    await message.reply("Доступ выдан ✅")
+    await message.reply(
+        "Доступ выдан ✅"
+    )
 
+# ОЖИДАНИЕ
 @dp.message_handler(commands=["wait"])
 async def wait(message: types.Message):
 
     if not message.reply_to_message:
         return
 
-    user_id = payment_requests.get(
+    user_id = admin_requests.get(
         message.reply_to_message.message_id
     )
 
@@ -185,15 +202,18 @@ async def wait(message: types.Message):
         "Проверяем оплату ⏳"
     )
 
-    await message.reply("Отправлено ✅")
+    await message.reply(
+        "Сообщение отправлено ✅"
+    )
 
+# ОШИБКА
 @dp.message_handler(commands=["fail"])
 async def fail(message: types.Message):
 
     if not message.reply_to_message:
         return
 
-    user_id = payment_requests.get(
+    user_id = admin_requests.get(
         message.reply_to_message.message_id
     )
 
@@ -205,7 +225,9 @@ async def fail(message: types.Message):
         "Перевод пока не найден ❌"
     )
 
-    await message.reply("Отправлено ✅")
+    await message.reply(
+        "Сообщение отправлено ✅"
+    )
 
 if __name__ == "__main__":
     executor.start_polling(dp)
