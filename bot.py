@@ -59,7 +59,7 @@ menu.add(
     KeyboardButton("Я оплатил")
 )
 
-waiting_users = {}
+payment_requests = {}
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
@@ -91,7 +91,7 @@ async def payment_method(message: types.Message):
 )
 async def paid(message: types.Message):
 
-    waiting_users[message.from_user.id] = True
+    payment_requests[message.from_user.id] = True
 
     await message.answer(
         "Отправьте:\n"
@@ -99,30 +99,31 @@ async def paid(message: types.Message):
         "- ссылку или номер заявки"
     )
 
-@dp.message_handler(
-    content_types=types.ContentTypes.ANY
-)
+@dp.message_handler(content_types=types.ContentTypes.ANY)
 async def get_payment(message: types.Message):
 
-    if message.from_user.id in waiting_users:
+    if message.from_user.id in payment_requests:
 
         username = message.from_user.username
         user_id = message.from_user.id
 
-        text = (
-            f"НОВАЯ ЗАЯВКА\n\n"
-            f"Username: @{username}\n"
-            f"User ID: {user_id}\n\n"
-            f"Ответьте:\n"
-            f"/ok\n"
-            f"/wait\n"
-            f"/fail"
+        admin_message = await bot.send_message(
+            ADMIN_ID,
+            f"""
+НОВАЯ ЗАЯВКА
+
+Username: @{username}
+User ID: {user_id}
+
+Ответьте reply-командой:
+
+/ok
+/wait
+/fail
+"""
         )
 
-        sent = await bot.send_message(
-            ADMIN_ID,
-            text
-        )
+        payment_requests[admin_message.message_id] = user_id
 
         if message.photo:
 
@@ -138,77 +139,73 @@ async def get_payment(message: types.Message):
                 f"Текст:\n{message.text}"
             )
 
-        waiting_users[sent.message_id] = user_id
-
         await message.answer(
             "Заявка отправлена ✅"
         )
 
-        del waiting_users[
-            message.from_user.id
-        ]
+        del payment_requests[message.from_user.id]
 
 @dp.message_handler(commands=["ok"])
 async def approve(message: types.Message):
 
-    if message.reply_to_message:
+    if not message.reply_to_message:
+        return
 
-        user_id = waiting_users.get(
-            message.reply_to_message.message_id
-        )
+    user_id = payment_requests.get(
+        message.reply_to_message.message_id
+    )
 
-        if user_id:
+    if not user_id:
+        return
 
-            await bot.send_message(
-                user_id,
-                f"Оплата подтверждена ✅\n\n"
-                f"Вот ссылка на канал:\n"
-                f"{CHANNEL_LINK}"
-            )
+    await bot.send_message(
+        user_id,
+        f"Оплата подтверждена ✅\n\n"
+        f"Вот ссылка на канал:\n"
+        f"{CHANNEL_LINK}"
+    )
 
-            await message.answer(
-                "Доступ выдан ✅"
-            )
+    await message.reply("Доступ выдан ✅")
 
 @dp.message_handler(commands=["wait"])
 async def wait(message: types.Message):
 
-    if message.reply_to_message:
+    if not message.reply_to_message:
+        return
 
-        user_id = waiting_users.get(
-            message.reply_to_message.message_id
-        )
+    user_id = payment_requests.get(
+        message.reply_to_message.message_id
+    )
 
-        if user_id:
+    if not user_id:
+        return
 
-            await bot.send_message(
-                user_id,
-                "Проверяем оплату ⏳"
-            )
+    await bot.send_message(
+        user_id,
+        "Проверяем оплату ⏳"
+    )
 
-            await message.answer(
-                "Сообщение отправлено ✅"
-            )
+    await message.reply("Отправлено ✅")
 
 @dp.message_handler(commands=["fail"])
 async def fail(message: types.Message):
 
-    if message.reply_to_message:
+    if not message.reply_to_message:
+        return
 
-        user_id = waiting_users.get(
-            message.reply_to_message.message_id
-        )
+    user_id = payment_requests.get(
+        message.reply_to_message.message_id
+    )
 
-        if user_id:
+    if not user_id:
+        return
 
-            await bot.send_message(
-                user_id,
-                "Перевод пока не найден ❌"
-            )
+    await bot.send_message(
+        user_id,
+        "Перевод пока не найден ❌"
+    )
 
-            await message.answer(
-                "Сообщение отправлено ✅"
-            )
+    await message.reply("Отправлено ✅")
 
 if __name__ == "__main__":
     executor.start_polling(dp)
