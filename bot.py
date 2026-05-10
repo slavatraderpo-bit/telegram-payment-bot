@@ -121,9 +121,7 @@ async def payment_method(
         usdt_kb.add(
             InlineKeyboardButton(
                 text="📋 Скопировать адрес",
-                copy_text=CopyTextButton(
-                text=USDT_ADDRESS
-                )
+                switch_inline_query_current_chat=USDT_ADDRESS
             )
         )
 
