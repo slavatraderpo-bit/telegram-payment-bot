@@ -179,19 +179,27 @@ async def payment_method(
         "🤷 Сапорт проверит оплату и предоставит доступ"
     )
 
-    support_kb = InlineKeyboardMarkup()
+    support_kb = InlineKeyboardMarkup(row_width=1)
 
     support_kb.add(
         InlineKeyboardButton(
-            text="📨 Отправить пруфы",
+            text="📨 Отправить",
             url=(
                 f"https://t.me/{ADMIN_USERNAME}"
                 f"?text=Привет.%20Я%20перевел,%20"
                 f"сейчас%20предоставлю%0A%0A"
+
                 f"✅%20скриншот%20оплаты%0A"
                 f"✅%20ссылка%20на%20перевод%0A"
                 f"✅%20TXID%20если%20крипта"
             )
+        )
+    )
+
+    support_kb.add(
+        InlineKeyboardButton(
+            text="💰 Выбор валюты оплаты",
+            callback_data="back_to_payments"
         )
     )
 
@@ -204,6 +212,16 @@ async def payment_method(
 # =========================
 # START BOT
 # =========================
+@dp.callback_query_handler(
+    lambda c: c.data == "back_to_payments"
+)
+async def back_to_payments(
+    callback: types.CallbackQuery
+):
+
+    await start(callback.message)
+
+    await callback.answer()
 
 if __name__ == "__main__":
     executor.start_polling(dp)
