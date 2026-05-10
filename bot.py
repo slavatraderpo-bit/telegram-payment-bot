@@ -444,6 +444,31 @@ async def back_to_payments(
     await guide(callback)
 
 # =========================
+# КНОПКА НАПИСАТЬ САПОРТУ
+# =========================
+
+@dp.message_handler(commands=["support"])
+async def support(message: types.Message):
+
+    support_kb = InlineKeyboardMarkup()
+
+    support_kb.add(
+        InlineKeyboardButton(
+            text="💬 Написать саппорту",
+            url=(
+                f"https://t.me/{ADMIN_USERNAME}"
+                f"?text=Привет,%20"
+                f"мне%20нужна%20помощь"
+            )
+        )
+    )
+
+    await message.answer(
+        "Нажми кнопку ниже👇",
+        reply_markup=support_kb
+    )
+
+# =========================
 # START BOT
 # =========================
 
