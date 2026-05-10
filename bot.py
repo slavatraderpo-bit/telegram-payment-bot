@@ -1,7 +1,8 @@
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import (
     InlineKeyboardMarkup,
-    InlineKeyboardButton
+    InlineKeyboardButton,
+    CopyTextButton
 )
 from aiogram.utils import executor
 import asyncio
@@ -108,9 +109,7 @@ async def payment_method(
 
             f"Скопируйте TRC20 адрес ниже:\n\n"
 
-            f"`{USDT_ADDRESS}`\n\n"
-
-            f"После оплаты дождитесь инструкции ниже."
+            f"`{USDT_ADDRESS}`"
         )
 
         usdt_kb = InlineKeyboardMarkup(row_width=1)
@@ -118,7 +117,9 @@ async def payment_method(
         usdt_kb.add(
             InlineKeyboardButton(
                 text="📋 Скопировать адрес",
-                switch_inline_query_current_chat=USDT_ADDRESS
+                copy_text=CopyTextButton(
+                    text=USDT_ADDRESS
+                )
             )
         )
 
@@ -150,7 +151,9 @@ async def payment_method(
         pay_kb.add(
             InlineKeyboardButton(
                 text="📋 Скопировать адрес",
-                switch_inline_query_current_chat=USDT_ADDRESS
+                copy_text=CopyTextButton(
+                    text=USDT_ADDRESS
+                )
             )
         )
 
@@ -170,39 +173,6 @@ async def payment_method(
 
     await callback.answer()
 
-    # =========================
-# ИНСТРУКЦИЯ ПОСЛЕ КНОПКИ ОПЛАТЫ
-# =========================
-    # =========================
-
-    support_text = (
-        "📸 После оплаты отправьте:\n\n"
-
-        "• скриншот оплаты\n"
-        "• ссылку или номер заявки\n\n"
-
-        "Менеджер проверит оплату "
-        "и отправит доступ."
-    )
-
-    support_kb = InlineKeyboardMarkup()
-
-    support_kb.add(
-        InlineKeyboardButton(
-            text="📨 Отправить",
-            url=(
-                f"https://t.me/{ADMIN_USERNAME}"
-                f"?text=Вот%20моя%20оплата"
-            )
-        )
-    )
-
-    await bot.send_message(
-        callback.from_user.id,
-        support_text,
-        reply_markup=support_kb
-    )
-
 # =========================
 # КНОПКА ОПЛАТЫ
 # =========================
@@ -219,10 +189,20 @@ async def open_payment(callback: types.CallbackQuery):
 
     data = PAYMENTS[currency]
 
-    # Открываем ссылку оплаты
+    # Кнопка оплаты ссылкой
+    pay_link_kb = InlineKeyboardMarkup()
+
+    pay_link_kb.add(
+        InlineKeyboardButton(
+            text="💳 Перейти к оплате",
+            url=data["link"]
+        )
+    )
+
     await bot.send_message(
         callback.from_user.id,
-        f"💳 Ссылка для оплаты:{data['link']}"
+        "Нажмите кнопку ниже для оплаты:",
+        reply_markup=pay_link_kb
     )
 
     await callback.answer()
@@ -231,10 +211,10 @@ async def open_payment(callback: types.CallbackQuery):
     await asyncio.sleep(10)
 
     support_text = (
-        "📸 После оплаты отправьте:"
+        "📸 После оплаты отправьте:\n\n"
 
-        "• скриншот оплаты"
-        "• ссылку или номер заявки"
+        "• скриншот оплаты\n"
+        "• ссылку или номер заявки\n\n"
 
         "Менеджер проверит оплату "
         "и отправит доступ."
