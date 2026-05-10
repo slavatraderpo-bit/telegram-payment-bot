@@ -54,10 +54,10 @@ async def start(message: types.Message):
 )
 async def send_video(callback: types.CallbackQuery):
 
-    await bot.send_video(
-        callback.from_user.id,
-        video=VIDEO_FILE_ID
-    )
+    await bot.send_message(
+    callback.from_user.id,
+    VIDEO_FILE_ID
+)
 
     await callback.answer()
 
