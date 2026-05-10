@@ -109,7 +109,9 @@ async def payment_method(
 
             f"Скопируйте TRC20 адрес ниже:\n\n"
 
-            f"`{USDT_ADDRESS}`"
+            f"`{USDT_ADDRESS}`\n\n"
+
+            f"После оплаты дождитесь инструкции ниже."
         )
 
         usdt_kb = InlineKeyboardMarkup(row_width=1)
@@ -160,7 +162,7 @@ async def payment_method(
         pay_kb.add(
             InlineKeyboardButton(
                 text="💳 Оплатить",
-                callback_data=f"openpay_{currency}"
+                url=data["link"]
             )
         )
 
@@ -173,42 +175,15 @@ async def payment_method(
 
     await callback.answer()
 
-# =========================
-# КНОПКА ОПЛАТЫ
-# =========================
+    # =========================
+    # ЖДЕМ 10 СЕК
+    # =========================
 
-@dp.callback_query_handler(
-    lambda c: c.data.startswith("openpay_")
-)
-async def open_payment(callback: types.CallbackQuery):
-
-    currency = callback.data.replace(
-        "openpay_",
-        ""
-    )
-
-    data = PAYMENTS[currency]
-
-    # Кнопка оплаты ссылкой
-    pay_link_kb = InlineKeyboardMarkup()
-
-    pay_link_kb.add(
-        InlineKeyboardButton(
-            text="💳 Перейти к оплате",
-            url=data["link"]
-        )
-    )
-
-    await bot.send_message(
-        callback.from_user.id,
-        "Нажмите кнопку ниже для оплаты:",
-        reply_markup=pay_link_kb
-    )
-
-    await callback.answer()
-
-    # Ждем 10 секунд
     await asyncio.sleep(10)
+
+    # =========================
+    # ИНСТРУКЦИЯ ПОСЛЕ ОПЛАТЫ
+    # =========================
 
     support_text = (
         "📸 После оплаты отправьте:\n\n"
