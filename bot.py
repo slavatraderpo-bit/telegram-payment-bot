@@ -52,7 +52,7 @@ async def start(message: types.Message):
 @dp.callback_query_handler(
     lambda c: c.data == "video1"
 )
-async def send_document(callback: types.CallbackQuery):
+async def send_video(callback: types.CallbackQuery):
 
     await bot.send_document(
         callback.from_user.id,
