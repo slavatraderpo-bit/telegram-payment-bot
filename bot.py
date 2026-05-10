@@ -4,244 +4,341 @@ from aiogram.types import (
     InlineKeyboardButton
 )
 from aiogram.utils import executor
-import asyncio
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import (
+    State,
+    StatesGroup
+)
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher.filters import Text
 
 TOKEN = "8677937283:AAFVFqWZoZ2pZuIX9TKWl8eZbvsSUdaLeqg"
 
+# ТВОЙ TELEGRAM ID
+ADMIN_ID = 7088252933
+
+# USERNAME ЗАКРЫТОГО КАНАЛА
+PRIVATE_CHANNEL = -1003924101643
+
+USDT_ADDRESS = "TTkHtaipHpPVFYUaJ2BbVs7RxBvss7LfFr"
+
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+
+storage = MemoryStorage()
+
+dp = Dispatcher(bot, storage=storage)
 
 # =========================
-# STORAGE CHANNEL DATA
+# ОПЛАТЫ
 # =========================
 
-STORAGE_CHAT_ID = -1003924101643
+PAYMENTS = {
+    "🇷🇺 RUB": {
+        "price": "1299₽",
+        "link": "https://sberbit.vip/exchange-cardrub-to-trc20/"
+    },
 
-VIDEO_1_ID = 2
-VIDEO_2_ID = 7
-VIDEO_3_ID = 8
+    "🇺🇦 UAH": {
+        "price": "699₴",
+        "link": "https://coinfusion.one/exchange_CARDUAH_to_USDTTRC/"
+    },
+
+    "🇰🇿 KZT": {
+        "price": "7999₸",
+        "link": "https://metka.cc/?cur_from=CARDKZT&cur_to=USDTTRC20"
+    },
+
+    "🇺🇸 USD": {
+        "price": "35$",
+        "link": "https://fastchange.me/change/visamastercard_usd-itez_usdt_trc20"
+    },
+
+    "🇪🇺 EUR": {
+        "price": "30€",
+        "link": "https://fastchange.me/change/visamastercard_eur-itez_usdt_trc20"
+    },
+
+    "₮ USDT": {
+        "price": "30 USDT",
+        "link": USDT_ADDRESS
+    }
+}
 
 # =========================
 # КНОПКИ
 # =========================
 
-start_kb = InlineKeyboardMarkup()
+payment_kb = InlineKeyboardMarkup(row_width=2)
 
-start_kb.add(
-    InlineKeyboardButton(
-        text="🔥 Забрать первое видео",
-        callback_data="video1"
+for key in PAYMENTS.keys():
+
+    payment_kb.insert(
+        InlineKeyboardButton(
+            text=key,
+            callback_data=f"pay_{key}"
+        )
     )
-)
-
-video2_kb = InlineKeyboardMarkup()
-
-video2_kb.add(
-    InlineKeyboardButton(
-        text="🔥 Открыть второе видео",
-        callback_data="video2"
-    )
-)
-
-video3_kb = InlineKeyboardMarkup()
-
-video3_kb.add(
-    InlineKeyboardButton(
-        text="🔥 Открыть третье видео",
-        callback_data="video3"
-    )
-)
-
-guide_kb = InlineKeyboardMarkup()
-
-guide_kb.add(
-    InlineKeyboardButton(
-        text="💰 Забрать руководство за 990₽",
-        callback_data="guide"
-    )
-)
 
 # =========================
-# START
+# FSM
+# =========================
+
+class PaymentState(StatesGroup):
+
+    waiting_screenshot = State()
+    waiting_link = State()
+
+# =========================
+# ХРАНЕНИЕ ЗАЯВОК
+# =========================
+
+admin_requests = {}
+
+# =========================
+# СТАРТ
 # =========================
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
 
+    await message.answer(
+        "💰 Выберите валюту оплаты:",
+        reply_markup=payment_kb
+    )
+
+# =========================
+# ВЫБОР ВАЛЮТЫ
+# =========================
+
+@dp.callback_query_handler(
+    Text(startswith="pay_")
+)
+async def payment_method(
+    callback: types.CallbackQuery
+):
+
+    currency = callback.data.replace(
+        "pay_",
+        ""
+    )
+
+    data = PAYMENTS[currency]
+
     text = (
-        "🔥 Привет! Ты в системе.\n"
-        "Я записал для тебя 3 коротких видео — "
-        "в них вся суть метода faceless-блогинга "
-        "через AI-персонажей.\n\n"
+        f"Оплата — {data['price']}\n\n"
 
-        "▸ Видео 1: Как выбрать тему для блога\n"
-        "▸ Видео 2: 2 формата контента и какие нейросети использовать\n"
-        "▸ Видео 3: Как монетизировать свой блог\n\n"
+        f"1. Перейдите по ссылке:\n"
+        f"{data['link']}\n\n"
 
-        "Каждое — 1.5-2 минуты. Без воды.\n"
-        "Готов? Жми кнопку — открою первое 👇\n\n"
+        f"2. Вставьте USDT TRC20 адрес:\n\n"
+        f"{USDT_ADDRESS}\n\n"
 
-        "⚠️ ВНИМАНИЕ: "
-        "ЭТИ ВИДЕО БУДУТ УДАЛЕНЫ ЧЕРЕЗ 48 ЧАСОВ"
+        f"3. После оплаты нажмите:\n"
+        f"Я оплатил"
+    )
+
+    paid_kb = InlineKeyboardMarkup()
+
+    paid_kb.add(
+        InlineKeyboardButton(
+            text="✅ Я оплатил",
+            callback_data="paid"
+        )
+    )
+
+    await bot.send_message(
+        callback.from_user.id,
+        text,
+        reply_markup=paid_kb
+    )
+
+    await callback.answer()
+
+# =========================
+# Я ОПЛАТИЛ
+# =========================
+
+@dp.callback_query_handler(
+    lambda c: c.data == "paid"
+)
+async def paid(
+    callback: types.CallbackQuery
+):
+
+    await PaymentState.waiting_screenshot.set()
+
+    await bot.send_message(
+        callback.from_user.id,
+        "📸 Отправьте скриншот оплаты"
+    )
+
+    await callback.answer()
+
+# =========================
+# ПОЛУЧАЕМ СКРИН
+# =========================
+
+@dp.message_handler(
+    content_types=types.ContentType.PHOTO,
+    state=PaymentState.waiting_screenshot
+)
+async def get_screenshot(
+    message: types.Message,
+    state: FSMContext
+):
+
+    photo_id = message.photo[-1].file_id
+
+    await state.update_data(
+        screenshot=photo_id
+    )
+
+    await PaymentState.next()
+
+    await message.answer(
+        "🔗 Теперь отправьте ссылку "
+        "или номер заявки"
+    )
+
+# =========================
+# ПОЛУЧАЕМ ЗАЯВКУ
+# =========================
+
+@dp.message_handler(
+    state=PaymentState.waiting_link
+)
+async def get_link(
+    message: types.Message,
+    state: FSMContext
+):
+
+    data = await state.get_data()
+
+    screenshot = data["screenshot"]
+
+    username = message.from_user.username
+    user_id = message.from_user.id
+
+    admin_message = await bot.send_message(
+        ADMIN_ID,
+        f"""
+🔥 НОВАЯ ОПЛАТА
+
+Username: @{username}
+User ID: {user_id}
+
+Заявка:
+{message.text}
+
+Reply командой:
+
+/ok
+/wait
+/fail
+"""
+    )
+
+    admin_requests[
+        admin_message.message_id
+    ] = user_id
+
+    await bot.send_photo(
+        ADMIN_ID,
+        screenshot,
+        caption="📸 Скрин оплаты"
     )
 
     await message.answer(
-        text,
-        reply_markup=start_kb
+        "✅ Заявка отправлена "
+        "на проверку"
     )
 
+    await state.finish()
+
 # =========================
-# ВИДЕО 1
+# OK
 # =========================
 
-@dp.callback_query_handler(
-    lambda c: c.data == "video1"
-)
-async def video1(callback: types.CallbackQuery):
+@dp.message_handler(commands=["ok"])
+async def approve(message: types.Message):
 
-    await bot.copy_message(
-        chat_id=callback.from_user.id,
-        from_chat_id=STORAGE_CHAT_ID,
-        message_id=VIDEO_1_ID
+    if not message.reply_to_message:
+        return
+
+    user_id = admin_requests.get(
+        message.reply_to_message.message_id
     )
 
-    await callback.answer()
+    if not user_id:
+        return
 
-    await asyncio.sleep(10)
-
-    text2 = (
-        "🔥 Красавчик, что досмотрел!\n"
-        "Что ты получил:\n\n"
-
-        "✓ Понимание двух путей выбора темы\n"
-        "✓ Знание, что темы не придумываются — заимствуются\n\n"
-
-        "Что дальше:\n"
-        "🎬 Видео 2 — 2 формата контента и какие нейросети использовать.\n\n"
-
-        "Тут начинается мясо. Жми 👇"
+    invite = await bot.create_chat_invite_link(
+        chat_id=PRIVATE_CHANNEL,
+        member_limit=1
     )
 
     await bot.send_message(
-        callback.from_user.id,
-        text2,
-        reply_markup=video2_kb
+        user_id,
+        f"✅ Оплата подтверждена\n\n"
+        f"Вот ваш доступ:\n"
+        f"{invite.invite_link}"
+    )
+
+    await message.reply(
+        "✅ Доступ выдан"
     )
 
 # =========================
-# ВИДЕО 2
+# WAIT
 # =========================
 
-@dp.callback_query_handler(
-    lambda c: c.data == "video2"
-)
-async def video2(callback: types.CallbackQuery):
+@dp.message_handler(commands=["wait"])
+async def wait(message: types.Message):
 
-    await bot.copy_message(
-        chat_id=callback.from_user.id,
-        from_chat_id=STORAGE_CHAT_ID,
-        message_id=VIDEO_2_ID
+    if not message.reply_to_message:
+        return
+
+    user_id = admin_requests.get(
+        message.reply_to_message.message_id
     )
 
-    await callback.answer()
-
-    await asyncio.sleep(10)
-
-    text3 = (
-        "🚀 Топ! Ты уже знаешь больше, чем "
-        "80% «начинающих faceless-блогеров».\n\n"
-
-        "Что ты получил:\n"
-
-        "✓ 2 рабочих формата AI-контента\n"
-        "✓ Список конкретных нейросетей\n"
-        "✓ Понимание, где брать темы\n\n"
-
-        "Что дальше:\n\n"
-
-        "🎬 Видео 3 — как я заработал 30 000₽ "
-        "с 250 подписчиками AI-персонажа.\n\n"
-
-        "Реальная формула с цифрами. Жми 👇"
-    )
+    if not user_id:
+        return
 
     await bot.send_message(
-        callback.from_user.id,
-        text3,
-        reply_markup=video3_kb
+        user_id,
+        "⏳ Проверяем оплату"
+    )
+
+    await message.reply(
+        "✅ Сообщение отправлено"
     )
 
 # =========================
-# ВИДЕО 3
+# FAIL
 # =========================
 
-@dp.callback_query_handler(
-    lambda c: c.data == "video3"
-)
-async def video3(callback: types.CallbackQuery):
+@dp.message_handler(commands=["fail"])
+async def fail(message: types.Message):
 
-    await bot.copy_message(
-        chat_id=callback.from_user.id,
-        from_chat_id=STORAGE_CHAT_ID,
-        message_id=VIDEO_3_ID
+    if not message.reply_to_message:
+        return
+
+    user_id = admin_requests.get(
+        message.reply_to_message.message_id
     )
 
-    await callback.answer()
-
-    await asyncio.sleep(10)
-
-    final_text = (
-        "🔥 Ну вот ты и в топ-10%.\n\n"
-
-        "Ты досмотрел все 3 видео. "
-        "Это значит ты не зритель — ты делатель.\n\n"
-
-        "Что ты уже знаешь:\n"
-
-        "✓ Как выбрать тему\n"
-        "✓ Как создавать AI-персонажа и контент\n"
-        "✓ Как продать первое\n\n"
-
-        "Это база. Полная система — внутри руководства:\n\n"
-
-        "📘 50 страниц без воды\n"
-        "📘 Создание AI-персонажа A→Z "
-        "(Nano Banana Pro + HeyGen)\n"
-        "📘 50+ готовых хуков под разные ниши\n"
-        "📘 Шаблоны для обоих форматов\n"
-        "📘 Подключение оплаты "
-        "(LavaTop за 15 минут)\n"
-        "📘 ПРАВА НА ПЕРЕПРОДАЖУ — "
-        "окупится одной продажей\n\n"
-
-        "Сейчас 990₽ вместо 2490₽.\n\n"
-
-        "+ Бонусом: моё обучение в записи 🎁\n\n"
-
-        "Забрать руководство за 990₽👇"
-    )
+    if not user_id:
+        return
 
     await bot.send_message(
-        callback.from_user.id,
-        final_text,
-        reply_markup=guide_kb
+        user_id,
+        "❌ Перевод пока не найден"
     )
 
-# =========================
-# КНОПКА РУКОВОДСТВА
-# =========================
-
-@dp.callback_query_handler(
-    lambda c: c.data == "guide"
-)
-async def guide(callback: types.CallbackQuery):
-
-    await bot.send_message(
-        callback.from_user.id,
-        "💰 Здесь позже будет оплата."
+    await message.reply(
+        "✅ Сообщение отправлено"
     )
-
-    await callback.answer()
 
 # =========================
 # START BOT
