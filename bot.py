@@ -47,7 +47,7 @@ PAYMENTS = {
     },
 
     "₮ USDT": {
-        "price": "30 USDT",
+        "price": "15 USDT",
         "link": ""
     }
 }
@@ -106,7 +106,7 @@ async def payment_method(
         text = (
             f"💰 Оплата — {data['price']}\n\n"
 
-            f"Скопируйте TRC20 адрес ниже:\n\n"
+            f"Скопируйте TRC20 адрес ниже одним нажатием👇:\n\n"
 
             f"`{USDT_ADDRESS}`\n\n"
 
@@ -118,7 +118,7 @@ async def payment_method(
         usdt_kb.add(
             InlineKeyboardButton(
                 text="📋 Скопировать адрес",
-                switch_inline_query_current_chat=USDT_ADDRESS
+                copy_text=USDT_ADDRESS
             )
         )
 
@@ -138,7 +138,7 @@ async def payment_method(
         text = (
             f"💰 Оплата — {data['price']}\n\n"
 
-            f"1. Скопируйте TRC20 адрес:\n\n"
+            f"1. Скопируйте TRC20 адрес одним нажатием👇:\n\n"
 
             f"`{USDT_ADDRESS}`\n\n"
 
@@ -150,7 +150,7 @@ async def payment_method(
         pay_kb.add(
             InlineKeyboardButton(
                 text="📋 Скопировать адрес",
-                switch_inline_query_current_chat=USDT_ADDRESS
+                copy_text=USDT_ADDRESS
             )
         )
 
