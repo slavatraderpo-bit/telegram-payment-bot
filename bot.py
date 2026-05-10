@@ -157,7 +157,7 @@ async def payment_method(
         pay_kb.add(
             InlineKeyboardButton(
                 text="💳 Оплатить",
-                url=data["link"]
+                callback_data=f"openpay_{currency}"
             )
         )
 
@@ -171,13 +171,8 @@ async def payment_method(
     await callback.answer()
 
     # =========================
-    # ЖДЕМ 10 СЕК
-    # =========================
-
-    await asyncio.sleep(10)
-
-    # =========================
-    # ИНСТРУКЦИЯ ПОСЛЕ ОПЛАТЫ
+# ИНСТРУКЦИЯ ПОСЛЕ КНОПКИ ОПЛАТЫ
+# =========================
     # =========================
 
     support_text = (
@@ -185,6 +180,68 @@ async def payment_method(
 
         "• скриншот оплаты\n"
         "• ссылку или номер заявки\n\n"
+
+        "Менеджер проверит оплату "
+        "и отправит доступ."
+    )
+
+    support_kb = InlineKeyboardMarkup()
+
+    support_kb.add(
+        InlineKeyboardButton(
+            text="📨 Отправить",
+            url=(
+                f"https://t.me/{ADMIN_USERNAME}"
+                f"?text=Вот%20моя%20оплата"
+            )
+        )
+    )
+
+    await bot.send_message(
+        callback.from_user.id,
+        support_text,
+        reply_markup=support_kb
+    )
+
+# =========================
+# КНОПКА ОПЛАТЫ
+# =========================
+
+@dp.callback_query_handler(
+    lambda c: c.data.startswith("openpay_")
+)
+async def open_payment(callback: types.CallbackQuery):
+
+    currency = callback.data.replace(
+        "openpay_",
+        ""
+    )
+
+    data = PAYMENTS[currency]
+
+    # Открываем ссылку оплаты
+    await bot.send_message(
+        callback.from_user.id,
+        f"💳 Ссылка для оплаты:
+
+{data['link']}"
+    )
+
+    await callback.answer()
+
+    # Ждем 10 секунд
+    await asyncio.sleep(10)
+
+    support_text = (
+        "📸 После оплаты отправьте:
+
+"
+
+        "• скриншот оплаты
+"
+        "• ссылку или номер заявки
+
+"
 
         "Менеджер проверит оплату "
         "и отправит доступ."
