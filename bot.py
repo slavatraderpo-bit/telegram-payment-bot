@@ -65,7 +65,7 @@ PAYMENTS = {
 }
 
 # =========================
-# КНОПКИ
+# КНОПКИ ВАЛЮТ
 # =========================
 
 payment_kb = InlineKeyboardMarkup(row_width=2)
@@ -95,7 +95,7 @@ class PaymentState(StatesGroup):
 admin_requests = {}
 
 # =========================
-# СТАРТ
+# START
 # =========================
 
 @dp.message_handler(commands=["start"])
@@ -175,7 +175,7 @@ async def paid(
     await callback.answer()
 
 # =========================
-# ПОЛУЧАЕМ СКРИН
+# СКРИН
 # =========================
 
 @dp.message_handler(
@@ -201,7 +201,7 @@ async def get_screenshot(
     )
 
 # =========================
-# ПОЛУЧАЕМ ЗАЯВКУ
+# ЗАЯВКА
 # =========================
 
 @dp.message_handler(
@@ -219,33 +219,44 @@ async def get_link(
     username = message.from_user.username
     user_id = message.from_user.id
 
-    admin_message = await bot.send_message(
-        ADMIN_ID,
-        f"""
-🔥 НОВАЯ ОПЛАТА
+    # Кнопки админа
+    admin_kb = InlineKeyboardMarkup(row_width=1)
 
-Username: @{username}
-User ID: {user_id}
-
-Заявка:
-{message.text}
-
-Reply командой:
-
-/ok
-/wait
-/fail
-"""
+    admin_kb.add(
+        InlineKeyboardButton(
+            text="✅ Подтвердить",
+            callback_data=f"ok_{user_id}"
+        )
     )
 
-    admin_requests[
-        admin_message.message_id
-    ] = user_id
+    admin_kb.add(
+        InlineKeyboardButton(
+            text="⏳ Проверка",
+            callback_data=f"wait_{user_id}"
+        )
+    )
 
+    admin_kb.add(
+        InlineKeyboardButton(
+            text="❌ Не найдено",
+            callback_data=f"fail_{user_id}"
+        )
+    )
+
+    # Фото
     await bot.send_photo(
         ADMIN_ID,
         screenshot,
-        caption="📸 Скрин оплаты"
+        caption=(
+            f"🔥 НОВАЯ ОПЛАТА\n\n"
+
+            f"👤 @{username}\n"
+            f"🆔 {user_id}\n\n"
+
+            f"🔗 Заявка:\n"
+            f"{message.text}"
+        ),
+        reply_markup=admin_kb
     )
 
     await message.answer(
@@ -256,21 +267,22 @@ Reply командой:
     await state.finish()
 
 # =========================
-# OK
+# ПОДТВЕРЖДЕНИЕ
 # =========================
 
-@dp.message_handler(commands=["ok"])
-async def approve(message: types.Message):
+@dp.callback_query_handler(
+    Text(startswith="ok_")
+)
+async def approve(
+    callback: types.CallbackQuery
+):
 
-    if not message.reply_to_message:
-        return
-
-    user_id = admin_requests.get(
-        message.reply_to_message.message_id
+    user_id = int(
+        callback.data.replace(
+            "ok_",
+            ""
+        )
     )
-
-    if not user_id:
-        return
 
     invite = await bot.create_chat_invite_link(
         chat_id=PRIVATE_CHANNEL,
@@ -284,60 +296,62 @@ async def approve(message: types.Message):
         f"{invite.invite_link}"
     )
 
-    await message.reply(
+    await callback.answer(
         "✅ Доступ выдан"
     )
 
 # =========================
-# WAIT
+# ПРОВЕРКА
 # =========================
 
-@dp.message_handler(commands=["wait"])
-async def wait(message: types.Message):
+@dp.callback_query_handler(
+    Text(startswith="wait_")
+)
+async def wait(
+    callback: types.CallbackQuery
+):
 
-    if not message.reply_to_message:
-        return
-
-    user_id = admin_requests.get(
-        message.reply_to_message.message_id
+    user_id = int(
+        callback.data.replace(
+            "wait_",
+            ""
+        )
     )
-
-    if not user_id:
-        return
 
     await bot.send_message(
         user_id,
         "⏳ Проверяем оплату"
     )
 
-    await message.reply(
-        "✅ Сообщение отправлено"
+    await callback.answer(
+        "✅ Отправлено"
     )
 
 # =========================
-# FAIL
+# НЕ НАЙДЕНО
 # =========================
 
-@dp.message_handler(commands=["fail"])
-async def fail(message: types.Message):
+@dp.callback_query_handler(
+    Text(startswith="fail_")
+)
+async def fail(
+    callback: types.CallbackQuery
+):
 
-    if not message.reply_to_message:
-        return
-
-    user_id = admin_requests.get(
-        message.reply_to_message.message_id
+    user_id = int(
+        callback.data.replace(
+            "fail_",
+            ""
+        )
     )
-
-    if not user_id:
-        return
 
     await bot.send_message(
         user_id,
         "❌ Перевод пока не найден"
     )
 
-    await message.reply(
-        "✅ Сообщение отправлено"
+    await callback.answer(
+        "✅ Отправлено"
     )
 
 # =========================
