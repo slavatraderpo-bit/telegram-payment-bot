@@ -1,8 +1,8 @@
-
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
+    CopyTextButton
 )
 
 from aiogram.utils import executor
@@ -120,7 +120,9 @@ async def payment_method(
         usdt_kb.add(
             InlineKeyboardButton(
                 text="📋 Скопировать адрес",
-                switch_inline_query_current_chat=USDT_ADDRESS
+                copy_text=CopyTextButton(
+                    text=USDT_ADDRESS
+                )
             )
         )
 
@@ -140,7 +142,7 @@ async def payment_method(
         text = (
             f"💰 Оплата — {data['price']}\n\n"
 
-            f"1. Скопируй TRC20 адрес одним нажатием на него👇:\n\n"
+            f"1. Скопируй TRC20 адрес одним нажатием👇:\n\n"
 
             f"`{USDT_ADDRESS}`\n\n"
 
@@ -152,7 +154,9 @@ async def payment_method(
         pay_kb.add(
             InlineKeyboardButton(
                 text="📋 Скопировать адрес",
-                switch_inline_query_current_chat=USDT_ADDRESS
+                copy_text=CopyTextButton(
+                    text=USDT_ADDRESS
+                )
             )
         )
 
