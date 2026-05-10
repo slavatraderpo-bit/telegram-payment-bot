@@ -4,29 +4,16 @@ from aiogram.types import (
     InlineKeyboardButton
 )
 from aiogram.utils import executor
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import (
-    State,
-    StatesGroup
-)
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters import Text
 
 TOKEN = "8677937283:AAFVFqWZoZ2pZuIX9TKWl8eZbvsSUdaLeqg"
 
-# ТВОЙ TELEGRAM ID
-ADMIN_ID = 7088252933
-
-# USERNAME ЗАКРЫТОГО КАНАЛА
-PRIVATE_CHANNEL = -1003924101643
+# ТВОЙ USERNAME БЕЗ @
+ADMIN_USERNAME = "keysiboss"
 
 USDT_ADDRESS = "TTkHtaipHpPVFYUaJ2BbVs7RxBvss7LfFr"
 
 bot = Bot(token=TOKEN)
-
-storage = MemoryStorage()
-
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(bot)
 
 # =========================
 # ОПЛАТЫ
@@ -80,21 +67,6 @@ for key in PAYMENTS.keys():
     )
 
 # =========================
-# FSM
-# =========================
-
-class PaymentState(StatesGroup):
-
-    waiting_screenshot = State()
-    waiting_link = State()
-
-# =========================
-# ХРАНЕНИЕ ЗАЯВОК
-# =========================
-
-admin_requests = {}
-
-# =========================
 # START
 # =========================
 
@@ -111,7 +83,7 @@ async def start(message: types.Message):
 # =========================
 
 @dp.callback_query_handler(
-    Text(startswith="pay_")
+    lambda c: c.data.startswith("pay_")
 )
 async def payment_method(
     callback: types.CallbackQuery
@@ -125,7 +97,7 @@ async def payment_method(
     data = PAYMENTS[currency]
 
     text = (
-        f"Оплата — {data['price']}\n\n"
+        f"💰 Оплата — {data['price']}\n\n"
 
         f"1. Перейдите по ссылке:\n"
         f"{data['link']}\n\n"
@@ -133,226 +105,31 @@ async def payment_method(
         f"2. Вставьте USDT TRC20 адрес:\n\n"
         f"{USDT_ADDRESS}\n\n"
 
-        f"3. После оплаты нажмите:\n"
-        f"Я оплатил"
+        f"3. После оплаты отправьте:\n"
+        f"• скрин оплаты\n"
+        f"• ссылку или номер заявки"
     )
 
-    paid_kb = InlineKeyboardMarkup()
+    support_kb = InlineKeyboardMarkup()
 
-    paid_kb.add(
+    support_kb.add(
         InlineKeyboardButton(
-            text="✅ Я оплатил",
-            callback_data="paid"
+            text="📨 Отправить оплату",
+            url=(
+                f"https://t.me/{ADMIN_USERNAME}"
+                f"?text=Здравствуйте,%20хочу%20"
+                f"отправить%20оплату"
+            )
         )
     )
 
     await bot.send_message(
         callback.from_user.id,
         text,
-        reply_markup=paid_kb
+        reply_markup=support_kb
     )
 
     await callback.answer()
-
-# =========================
-# Я ОПЛАТИЛ
-# =========================
-
-@dp.callback_query_handler(
-    lambda c: c.data == "paid"
-)
-async def paid(
-    callback: types.CallbackQuery
-):
-
-    await PaymentState.waiting_screenshot.set()
-
-    await bot.send_message(
-        callback.from_user.id,
-        "📸 Отправьте скриншот оплаты"
-    )
-
-    await callback.answer()
-
-# =========================
-# СКРИН
-# =========================
-
-@dp.message_handler(
-    content_types=types.ContentType.PHOTO,
-    state=PaymentState.waiting_screenshot
-)
-async def get_screenshot(
-    message: types.Message,
-    state: FSMContext
-):
-
-    photo_id = message.photo[-1].file_id
-
-    await state.update_data(
-        screenshot=photo_id
-    )
-
-    await PaymentState.next()
-
-    await message.answer(
-        "🔗 Теперь отправьте ссылку "
-        "или номер заявки"
-    )
-
-# =========================
-# ЗАЯВКА
-# =========================
-
-@dp.message_handler(
-    state=PaymentState.waiting_link
-)
-async def get_link(
-    message: types.Message,
-    state: FSMContext
-):
-
-    data = await state.get_data()
-
-    screenshot = data["screenshot"]
-
-    username = message.from_user.username
-    user_id = message.from_user.id
-
-    # Кнопки админа
-    admin_kb = InlineKeyboardMarkup(row_width=1)
-
-    admin_kb.add(
-        InlineKeyboardButton(
-            text="✅ Подтвердить",
-            callback_data=f"ok_{user_id}"
-        )
-    )
-
-    admin_kb.add(
-        InlineKeyboardButton(
-            text="⏳ Проверка",
-            callback_data=f"wait_{user_id}"
-        )
-    )
-
-    admin_kb.add(
-        InlineKeyboardButton(
-            text="❌ Не найдено",
-            callback_data=f"fail_{user_id}"
-        )
-    )
-
-    # Фото
-    await bot.send_photo(
-        ADMIN_ID,
-        screenshot,
-        caption=(
-            f"🔥 НОВАЯ ОПЛАТА\n\n"
-
-            f"👤 @{username}\n"
-            f"🆔 {user_id}\n\n"
-
-            f"🔗 Заявка:\n"
-            f"{message.text}"
-        ),
-        reply_markup=admin_kb
-    )
-
-    await message.answer(
-        "✅ Заявка отправлена "
-        "на проверку"
-    )
-
-    await state.finish()
-
-# =========================
-# ПОДТВЕРЖДЕНИЕ
-# =========================
-
-@dp.callback_query_handler(
-    Text(startswith="ok_")
-)
-async def approve(
-    callback: types.CallbackQuery
-):
-
-    user_id = int(
-        callback.data.replace(
-            "ok_",
-            ""
-        )
-    )
-
-    invite = await bot.create_chat_invite_link(
-        chat_id=PRIVATE_CHANNEL,
-        member_limit=1
-    )
-
-    await bot.send_message(
-        user_id,
-        f"✅ Оплата подтверждена\n\n"
-        f"Вот ваш доступ:\n"
-        f"{invite.invite_link}"
-    )
-
-    await callback.answer(
-        "✅ Доступ выдан"
-    )
-
-# =========================
-# ПРОВЕРКА
-# =========================
-
-@dp.callback_query_handler(
-    Text(startswith="wait_")
-)
-async def wait(
-    callback: types.CallbackQuery
-):
-
-    user_id = int(
-        callback.data.replace(
-            "wait_",
-            ""
-        )
-    )
-
-    await bot.send_message(
-        user_id,
-        "⏳ Проверяем оплату"
-    )
-
-    await callback.answer(
-        "✅ Отправлено"
-    )
-
-# =========================
-# НЕ НАЙДЕНО
-# =========================
-
-@dp.callback_query_handler(
-    Text(startswith="fail_")
-)
-async def fail(
-    callback: types.CallbackQuery
-):
-
-    user_id = int(
-        callback.data.replace(
-            "fail_",
-            ""
-        )
-    )
-
-    await bot.send_message(
-        user_id,
-        "❌ Перевод пока не найден"
-    )
-
-    await callback.answer(
-        "✅ Отправлено"
-    )
 
 # =========================
 # START BOT
