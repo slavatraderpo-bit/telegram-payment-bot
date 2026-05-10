@@ -222,9 +222,7 @@ async def open_payment(callback: types.CallbackQuery):
     # Открываем ссылку оплаты
     await bot.send_message(
         callback.from_user.id,
-        f"💳 Ссылка для оплаты:
-
-{data['link']}"
+        f"💳 Ссылка для оплаты:{data['link']}"
     )
 
     await callback.answer()
@@ -233,15 +231,10 @@ async def open_payment(callback: types.CallbackQuery):
     await asyncio.sleep(10)
 
     support_text = (
-        "📸 После оплаты отправьте:
+        "📸 После оплаты отправьте:"
 
-"
-
-        "• скриншот оплаты
-"
-        "• ссылку или номер заявки
-
-"
+        "• скриншот оплаты"
+        "• ссылку или номер заявки"
 
         "Менеджер проверит оплату "
         "и отправит доступ."
