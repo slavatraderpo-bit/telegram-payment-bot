@@ -4,6 +4,7 @@ from aiogram.types import (
     InlineKeyboardButton
 )
 from aiogram.utils import executor
+import asyncio
 
 TOKEN = "8677937283:AAFVFqWZoZ2pZuIX9TKWl8eZbvsSUdaLeqg"
 
@@ -99,37 +100,62 @@ async def payment_method(
     text = (
         f"💰 Оплата — {data['price']}\n\n"
 
-        f"1. Перейдите по ссылке:\n"
-        f"{data['link']}\n\n"
+        f"1. Нажмите кнопку ниже:\n\n"
 
-        f"2. Вставьте USDT TRC20 адрес:\n\n"
-        f"{USDT_ADDRESS}\n\n"
-
-        f"3. После оплаты отправьте:\n"
-        f"• скрин оплаты\n"
-        f"• ссылку или номер заявки"
+        f"2. Вставьте этот USDT TRC20 адрес:\n\n"
+        f"{USDT_ADDRESS}"
     )
 
-    support_kb = InlineKeyboardMarkup()
+    # КНОПКА ОПЛАТЫ
+    pay_kb = InlineKeyboardMarkup()
 
-    support_kb.add(
+    pay_kb.add(
         InlineKeyboardButton(
-            text="📨 Отправить оплату",
-            url=(
-                f"https://t.me/{ADMIN_USERNAME}"
-                f"?text=Здравствуйте,%20хочу%20"
-                f"отправить%20оплату"
-            )
+            text="💳 Оплатить",
+            url=data["link"]
         )
     )
 
     await bot.send_message(
         callback.from_user.id,
         text,
-        reply_markup=support_kb
+        reply_markup=pay_kb
     )
 
     await callback.answer()
+
+    # ЖДЕМ 10 СЕК
+    await asyncio.sleep(10)
+
+    # ТЕКСТ ПОСЛЕ ОПЛАТЫ
+    support_text = (
+        "📸 После оплаты отправьте:\n\n"
+
+        "• скриншот оплаты\n"
+        "• ссылку или номер заявки\n\n"
+
+        "Менеджер проверит оплату "
+        "и отправит доступ."
+    )
+
+    # КНОПКА В ЛИЧКУ
+    support_kb = InlineKeyboardMarkup()
+
+    support_kb.add(
+        InlineKeyboardButton(
+            text="📨 Отправить",
+            url=(
+                f"https://t.me/{ADMIN_USERNAME}"
+                f"?text=Вот%20моя%20оплата"
+            )
+        )
+    )
+
+    await bot.send_message(
+        callback.from_user.id,
+        support_text,
+        reply_markup=support_kb
+    )
 
 # =========================
 # START BOT
