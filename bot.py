@@ -56,7 +56,7 @@ async def send_video(callback: types.CallbackQuery):
 
     await bot.send_document(
         callback.from_user.id,
-        video=VIDEO_FILE_ID
+        document=VIDEO_FILE_ID
     )
 
     await callback.answer()
