@@ -48,7 +48,7 @@ PAYMENTS = {
 
     "₮ USDT": {
         "price": "30 USDT",
-        "link": USDT_ADDRESS
+        "link": ""
     }
 }
 
@@ -97,37 +97,89 @@ async def payment_method(
 
     data = PAYMENTS[currency]
 
-    text = (
-        f"💰 Оплата — {data['price']}\n\n"
+    # =========================
+    # USDT
+    # =========================
 
-        f"1. Нажмите кнопку ниже:\n\n"
+    if currency == "₮ USDT":
 
-        f"2. Вставьте этот USDT TRC20 адрес:\n\n"
-        f"{USDT_ADDRESS}"
-    )
+        text = (
+            f"💰 Оплата — {data['price']}\n\n"
 
-    # КНОПКА ОПЛАТЫ
-    pay_kb = InlineKeyboardMarkup()
+            f"Скопируйте TRC20 адрес ниже:\n\n"
 
-    pay_kb.add(
-        InlineKeyboardButton(
-            text="💳 Оплатить",
-            url=data["link"]
+            f"`{USDT_ADDRESS}`\n\n"
+
+            f"После оплаты дождитесь инструкции ниже."
         )
-    )
 
-    await bot.send_message(
-        callback.from_user.id,
-        text,
-        reply_markup=pay_kb
-    )
+        usdt_kb = InlineKeyboardMarkup(row_width=1)
+
+        usdt_kb.add(
+            InlineKeyboardButton(
+                text="📋 Скопировать адрес",
+                switch_inline_query_current_chat=USDT_ADDRESS
+            )
+        )
+
+        await bot.send_message(
+            callback.from_user.id,
+            text,
+            parse_mode="Markdown",
+            reply_markup=usdt_kb
+        )
+
+    # =========================
+    # ДРУГИЕ ВАЛЮТЫ
+    # =========================
+
+    else:
+
+        text = (
+            f"💰 Оплата — {data['price']}\n\n"
+
+            f"1. Скопируйте TRC20 адрес:\n\n"
+
+            f"`{USDT_ADDRESS}`\n\n"
+
+            f"2. Нажмите кнопку оплаты ниже."
+        )
+
+        pay_kb = InlineKeyboardMarkup(row_width=1)
+
+        pay_kb.add(
+            InlineKeyboardButton(
+                text="📋 Скопировать адрес",
+                switch_inline_query_current_chat=USDT_ADDRESS
+            )
+        )
+
+        pay_kb.add(
+            InlineKeyboardButton(
+                text="💳 Оплатить",
+                url=data["link"]
+            )
+        )
+
+        await bot.send_message(
+            callback.from_user.id,
+            text,
+            parse_mode="Markdown",
+            reply_markup=pay_kb
+        )
 
     await callback.answer()
 
+    # =========================
     # ЖДЕМ 10 СЕК
+    # =========================
+
     await asyncio.sleep(10)
 
-    # ТЕКСТ ПОСЛЕ ОПЛАТЫ
+    # =========================
+    # ИНСТРУКЦИЯ ПОСЛЕ ОПЛАТЫ
+    # =========================
+
     support_text = (
         "📸 После оплаты отправьте:\n\n"
 
@@ -138,7 +190,6 @@ async def payment_method(
         "и отправит доступ."
     )
 
-    # КНОПКА В ЛИЧКУ
     support_kb = InlineKeyboardMarkup()
 
     support_kb.add(
