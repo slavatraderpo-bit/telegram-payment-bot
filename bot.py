@@ -459,8 +459,6 @@ async def get_link(message: types.Message):
         chat_id=PRIVATE_CHANNEL_ID,
         member_limit=1
     )
-
-
     await message.answer(
         f"🔗 Одноразовая ссылка:\n\n"
         f"{invite.invite_link}"
