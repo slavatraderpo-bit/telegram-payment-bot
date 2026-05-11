@@ -14,6 +14,8 @@ ADMIN_USERNAME = "keysiboss"
 
 USDT_ADDRESS = "TTkHtaipHpPVFYUaJ2BbVs7RxBvss7LfFr"
 
+PRIVATE_CHANNEL_ID = -1003972095670
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
@@ -444,6 +446,26 @@ async def back_to_payments(
     await guide(callback)
 
 # =========================
+# ВЫДАЧА ОДНОРАЗОВЫХ ССЫЛОК
+# =========================
+@dp.message_handler(commands=["link"])
+async def get_link(message: types.Message):
+
+    # Только для тебя
+    if message.from_user.username != ADMIN_USERNAME:
+        return
+
+    invite = await bot.create_chat_invite_link(
+        chat_id=PRIVATE_CHANNEL_ID,
+        member_limit=1
+    )
+
+    await message.answer(
+        f"🔗 Одноразовая ссылка:\n\n"
+        f"{invite.invite_link}"
+    )
+
+# =========================
 # КНОПКА НАПИСАТЬ САПОРТУ
 # =========================
 
@@ -464,7 +486,7 @@ async def support(message: types.Message):
     )
 
     await message.answer(
-        "Нажми кнопку ниже👇",
+        "Нашел проблему?",
         reply_markup=support_kb
     )
 
