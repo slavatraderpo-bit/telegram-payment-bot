@@ -3,7 +3,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton
 )
-
+import asyncio
 from aiogram.utils import executor
 import asyncio
 
@@ -455,13 +455,21 @@ async def get_link(message: types.Message):
     if message.from_user.username != ADMIN_USERNAME:
         return
 
-    from datetime import datetime, timedelta, timezone
-
     invite = await bot.create_chat_invite_link(
         chat_id=PRIVATE_CHANNEL_ID,
-        member_limit=1,
-        expire_date=datetime.now(timezone.utc) + timedelta(minutes=5)
+        member_limit=1
     )
+
+    async def revoke_link():
+
+        await asyncio.sleep(300)
+
+        await bot.revoke_chat_invite_link(
+            chat_id=PRIVATE_CHANNEL_ID,
+            invite_link=invite.invite_link
+        )
+
+    asyncio.create_task(revoke_link())
 
     await message.answer(
         f"🔗 Одноразовая ссылка:\n\n"
