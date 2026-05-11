@@ -3,7 +3,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton
 )
-from datetime import datetime, timedelta
+
 from aiogram.utils import executor
 import asyncio
 
@@ -455,10 +455,12 @@ async def get_link(message: types.Message):
     if message.from_user.username != ADMIN_USERNAME:
         return
 
+    from datetime import datetime, timedelta
+
     invite = await bot.create_chat_invite_link(
         chat_id=PRIVATE_CHANNEL_ID,
         member_limit=1,
-        expire_date=datetime.now() + timedelta(minutes=5)
+        expire_date=datetime.utcnow() + timedelta(minutes=5)
     )
 
     await message.answer(
