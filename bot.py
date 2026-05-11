@@ -457,7 +457,8 @@ async def get_link(message: types.Message):
 
     invite = await bot.create_chat_invite_link(
         chat_id=PRIVATE_CHANNEL_ID,
-        member_limit=1
+        member_limit=1,
+        expire_date=int(time.time()) + 300
     )
 
     await message.answer(
