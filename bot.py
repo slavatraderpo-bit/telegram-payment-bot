@@ -7,8 +7,9 @@ from aiogram.types import (
 from aiogram.utils import executor
 import asyncio
 
+
 import os
-TOKEN = os.getenv("8677937283:AAFVFqWZoZ2pZuIX9TKWl8eZbvsSUdaLeqg")
+TOKEN = os.getenv("BOT_TOKEN")
 
 # ТВОЙ USERNAME БЕЗ @
 ADMIN_USERNAME = "keysiboss"
