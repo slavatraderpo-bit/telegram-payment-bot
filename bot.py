@@ -6,7 +6,7 @@ from aiogram.types import (
 
 from aiogram.utils import executor
 import asyncio
-
+import psycopg2
 
 import os
 TOKEN = os.getenv("BOT_TOKEN")
@@ -23,7 +23,24 @@ PRIVATE_CHANNEL_ID = -1003974723795
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-USERS_FILE = "users.txt"
+# =========================
+# DATABASE
+# =========================
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+conn = psycopg2.connect(DATABASE_URL)
+
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    user_id BIGINT PRIMARY KEY
+)
+""")
+
+conn.commit()
+
 
 # =========================
 # STORAGE CHANNEL DATA
@@ -135,15 +152,16 @@ async def start(message: types.Message):
 
     user_id = message.from_user.id
 
-    with open(USERS_FILE, "a+") as f:
+    cursor.execute(
+        """
+        INSERT INTO users (user_id)
+        VALUES (%s)
+        ON CONFLICT (user_id) DO NOTHING
+        """,
+        (user_id,)
+    )
 
-        f.seek(0)
-
-        users = f.read().splitlines()
-
-        if str(user_id) not in users:
-
-            f.write(f"{user_id}\n")
+    conn.commit()
 
     try:
 
@@ -581,6 +599,27 @@ async def support(message: types.Message):
     await message.answer(
         "Нашел проблему?",
         reply_markup=support_kb
+    )
+
+
+# =========================
+# STATS
+# =========================
+
+@dp.message_handler(commands=["stats"])
+async def stats(message: types.Message):
+
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM users"
+    )
+
+    count = cursor.fetchone()[0]
+
+    await message.answer(
+        f"👥 Пользователей: {count}"
     )
 
 # =========================
