@@ -23,6 +23,8 @@ PRIVATE_CHANNEL_ID = -1003974723795
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
+user_last_click = {}
+
 # =========================
 # STORAGE CHANNEL DATA
 # =========================
@@ -181,9 +183,19 @@ async def start(message: types.Message):
 
     text = (
         "🔥 Привет! Ты в системе.\n"
-        "Я записал для тебя 3 коротких видео.\n\n"
+        "Я записал для тебя 3 коротких видео — "
+        "в них вся суть метода faceless-блогинга "
+        "через AI-персонажей.\n\n"
 
-        "Жми кнопку ниже 👇"
+        "▸ Видео 1: Как выбрать тему для блога\n"
+        "▸ Видео 2: 2 формата контента и какие нейросети использовать\n"
+        "▸ Видео 3: Как монетизировать свой блог\n\n"
+
+        "Каждое — 1.5-2 минуты. Без воды.\n"
+        "Готов? Жми кнопку — открою первое 👇\n\n"
+
+        "⚠️ ВНИМАНИЕ: "
+        "ЭТИ ВИДЕО БУДУТ УДАЛЕНЫ ЧЕРЕЗ 48 ЧАСОВ"
     )
 
     await message.answer(
@@ -239,6 +251,19 @@ async def check_sub(callback: types.CallbackQuery):
     lambda c: c.data == "video1"
 )
 async def video1(callback: types.CallbackQuery):
+
+    user_id = callback.from_user.id
+
+    if user_id in user_last_click:
+
+        if asyncio.get_event_loop().time() - user_last_click[user_id] < 3:
+            await callback.answer(
+                "⏳ Не спамь кнопки",
+                show_alert=True
+            )
+            return
+
+    user_last_click[user_id] = asyncio.get_event_loop().time()
 
     await bot.copy_message(
         chat_id=callback.from_user.id,
