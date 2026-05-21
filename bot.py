@@ -165,10 +165,12 @@ async def start(message: types.Message):
 
             return
 
-    except:
+    except Exception as e:
+
+        print(e)
 
         await message.answer(
-            "⚠️ Добавь бота в админы канала"
+            "⚠️ Ошибка проверки подписки"
         )
 
         return
