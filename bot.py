@@ -254,16 +254,20 @@ async def video1(callback: types.CallbackQuery):
 
     user_id = callback.from_user.id
 
-    if user_id in user_last_click:
+    key = f"{user_id}_{callback.data}"
 
-        if asyncio.get_event_loop().time() - user_last_click[user_id] < 3:
+    if key in user_last_click:
+
+        if asyncio.get_event_loop().time() - user_last_click[key] < 10:
+
             await callback.answer(
-                "⏳ Не спамь кнопки",
+                "⏳ Подожди немного",
                 show_alert=True
             )
+
             return
 
-    user_last_click[user_id] = asyncio.get_event_loop().time()
+    user_last_click[key] = asyncio.get_event_loop().time()
 
     await bot.copy_message(
         chat_id=callback.from_user.id,
@@ -302,6 +306,19 @@ async def video1(callback: types.CallbackQuery):
     lambda c: c.data == "video2"
 )
 async def video2(callback: types.CallbackQuery):
+
+    user_id = callback.from_user.id
+
+    if user_id in user_last_click:
+
+        if asyncio.get_event_loop().time() - user_last_click[user_id] < 3:
+            await callback.answer(
+                "⏳ Не спамь кнопки",
+                show_alert=True
+            )
+            return
+
+    user_last_click[user_id] = asyncio.get_event_loop().time()
 
     await bot.copy_message(
         chat_id=callback.from_user.id,
