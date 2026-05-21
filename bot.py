@@ -25,6 +25,37 @@ dp = Dispatcher(bot)
 user_last_click = {}
 
 # =========================
+# ANTI SPAM
+# =========================
+
+async def anti_spam(callback, seconds=10):
+
+    user_id = callback.from_user.id
+
+    key = f"{user_id}_{callback.data}"
+
+    if key in user_last_click:
+
+        if (
+            asyncio.get_event_loop().time()
+            - user_last_click[key]
+            < seconds
+        ):
+
+            await callback.answer(
+                "⏳ Подожди немного",
+                show_alert=True
+            )
+
+            return False
+
+    user_last_click[key] = (
+        asyncio.get_event_loop().time()
+    )
+
+    return True
+
+# =========================
 # STORAGE CHANNEL DATA
 # =========================
 
@@ -251,22 +282,8 @@ async def check_sub(callback: types.CallbackQuery):
 )
 async def video1(callback: types.CallbackQuery):
 
-    user_id = callback.from_user.id
-
-    key = f"{user_id}_{callback.data}"
-
-    if key in user_last_click:
-
-        if asyncio.get_event_loop().time() - user_last_click[key] < 30:
-
-            await callback.answer(
-                "⏳ Подожди немного",
-                show_alert=True
-            )
-
-            return
-
-    user_last_click[key] = asyncio.get_event_loop().time()
+    if not await anti_spam(callback, 20):
+        return
 
     await callback.answer()
 
@@ -304,22 +321,8 @@ async def video1(callback: types.CallbackQuery):
 )
 async def video2(callback: types.CallbackQuery):
 
-    user_id = callback.from_user.id
-
-    key = f"{user_id}_{callback.data}"
-
-    if key in user_last_click:
-
-        if asyncio.get_event_loop().time() - user_last_click[key] < 30:
-
-            await callback.answer(
-                "⏳ Подожди немного",
-                show_alert=True
-            )
-
-            return
-
-    user_last_click[key] = asyncio.get_event_loop().time()
+    if not await anti_spam(callback, 20):
+        return
 
     await callback.answer()
 
@@ -362,22 +365,8 @@ async def video2(callback: types.CallbackQuery):
 )
 async def video3(callback: types.CallbackQuery):
 
-    user_id = callback.from_user.id
-
-    key = f"{user_id}_{callback.data}"
-
-    if key in user_last_click:
-
-        if asyncio.get_event_loop().time() - user_last_click[key] < 30:
-
-            await callback.answer(
-                "⏳ Подожди немного",
-                show_alert=True
-            )
-
-            return
-
-    user_last_click[key] = asyncio.get_event_loop().time()
+    if not await anti_spam(callback, 20):
+        return
 
     await callback.answer()
 
@@ -433,22 +422,8 @@ async def video3(callback: types.CallbackQuery):
 )
 async def guide(callback: types.CallbackQuery):
 
-    user_id = callback.from_user.id
-
-    key = f"{user_id}_{callback.data}"
-
-    if key in user_last_click:
-
-        if asyncio.get_event_loop().time() - user_last_click[key] < 30:
-
-            await callback.answer(
-                "⏳ Подожди немного",
-                show_alert=True
-            )
-
-            return
-
-    user_last_click[key] = asyncio.get_event_loop().time()
+    if not await anti_spam(callback, 20):
+        return
 
     await callback.answer()
 
@@ -469,23 +444,9 @@ async def payment_method(
     callback: types.CallbackQuery
 ):
     
-    user_id = callback.from_user.id
-
-    key = f"{user_id}_{callback.data}"
-
-    if key in user_last_click:
-
-        if asyncio.get_event_loop().time() - user_last_click[key] < 10:
-
-            await callback.answer(
-                "⏳ Подожди немного",
-                show_alert=True
-            )
-
-            return
-
-    user_last_click[key] = asyncio.get_event_loop().time()
-
+    if not await anti_spam(callback, 10):
+        return
+    
     currency = callback.data.replace(
         "pay_",
         ""
