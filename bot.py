@@ -14,7 +14,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 # ТВОЙ USERNAME БЕЗ @
 ADMIN_USERNAME = "keysiboss"
 
-CHANNEL_USERNAME = "@keysiai"
+CHANNEL_ID = -1003972095670
 
 USDT_ADDRESS = "TTkHtaipHpPVFYUaJ2BbVs7RxBvss7LfFr"
 
@@ -136,7 +136,7 @@ async def start(message: types.Message):
     try:
 
         member = await bot.get_chat_member(
-            CHANNEL_USERNAME,
+            CHANNEL_ID,
             user_id
         )
 
@@ -199,7 +199,7 @@ async def check_sub(callback: types.CallbackQuery):
     user_id = callback.from_user.id
 
     member = await bot.get_chat_member(
-        CHANNEL_USERNAME,
+        CHANNEL_ID,
         user_id
     )
 
