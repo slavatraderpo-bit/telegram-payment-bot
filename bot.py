@@ -11,6 +11,7 @@ import asyncio
 import os
 TOKEN = os.getenv("BOT_TOKEN")
 
+ADMIN_USERNAME = "keysiboss"
 ADMIN_ID = 7088252933
 
 CHANNEL_ID = -1003972095670
@@ -21,6 +22,8 @@ PRIVATE_CHANNEL_ID = -1003974723795
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
+
+USERS_FILE = "users.txt"
 
 # =========================
 # STORAGE CHANNEL DATA
@@ -131,6 +134,16 @@ for key in PAYMENTS.keys():
 async def start(message: types.Message):
 
     user_id = message.from_user.id
+
+    with open(USERS_FILE, "a+") as f:
+
+        f.seek(0)
+
+        users = f.read().splitlines()
+
+        if str(user_id) not in users:
+
+            f.write(f"{user_id}\n")
 
     try:
 
