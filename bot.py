@@ -14,6 +14,8 @@ TOKEN = os.getenv("BOT_TOKEN")
 # ТВОЙ USERNAME БЕЗ @
 ADMIN_USERNAME = "keysiboss"
 
+CHANNEL_USERNAME = "@keysiai"
+
 USDT_ADDRESS = "TTkHtaipHpPVFYUaJ2BbVs7RxBvss7LfFr"
 
 PRIVATE_CHANNEL_ID = -1003974723795
@@ -129,27 +131,103 @@ for key in PAYMENTS.keys():
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
 
+    user_id = message.from_user.id
+
+    try:
+
+        member = await bot.get_chat_member(
+            CHANNEL_USERNAME,
+            user_id
+        )
+
+        if member.status in ["left", "kicked"]:
+
+            sub_kb = InlineKeyboardMarkup(row_width=1)
+
+            sub_kb.add(
+                InlineKeyboardButton(
+                    text="📢 Подписаться",
+                    url="https://t.me/keysiai"
+                )
+            )
+
+            sub_kb.add(
+                InlineKeyboardButton(
+                    text="✅ Проверить подписку",
+                    callback_data="check_sub"
+                )
+            )
+
+            await message.answer(
+                "❌ Сначала подпишись на канал",
+                reply_markup=sub_kb
+            )
+
+            return
+
+    except:
+
+        await message.answer(
+            "⚠️ Добавь бота в админы канала"
+        )
+
+        return
+
+    # =========================
+    # ОСНОВНОЙ ТЕКСТ
+    # =========================
+
     text = (
         "🔥 Привет! Ты в системе.\n"
-        "Я записал для тебя 3 коротких видео — "
-        "в них вся суть метода faceless-блогинга "
-        "через AI-персонажей.\n\n"
+        "Я записал для тебя 3 коротких видео.\n\n"
 
-        "▸ Видео 1: Как выбрать тему для блога\n"
-        "▸ Видео 2: 2 формата контента и какие нейросети использовать\n"
-        "▸ Видео 3: Как монетизировать свой блог\n\n"
-
-        "Каждое — 1.5-2 минуты. Без воды.\n"
-        "Готов? Жми кнопку — открою первое 👇\n\n"
-
-        "⚠️ ВНИМАНИЕ: "
-        "ЭТИ ВИДЕО БУДУТ УДАЛЕНЫ ЧЕРЕЗ 48 ЧАСОВ"
+        "Жми кнопку ниже 👇"
     )
 
     await message.answer(
         text,
         reply_markup=start_kb
     )
+
+
+# проверка
+@dp.callback_query_handler(
+    lambda c: c.data == "check_sub"
+)
+async def check_sub(callback: types.CallbackQuery):
+
+    user_id = callback.from_user.id
+
+    member = await bot.get_chat_member(
+        CHANNEL_USERNAME,
+        user_id
+    )
+
+    if member.status in ["left", "kicked"]:
+
+        await callback.answer(
+            "❌ Ты не подписан",
+            show_alert=True
+        )
+
+    else:
+
+        await callback.message.delete()
+
+        text = (
+            "🔥 Привет! Ты в системе.\n"
+            "Жми кнопку ниже 👇"
+        )
+
+        await bot.send_message(
+            user_id,
+            text,
+            reply_markup=start_kb
+        )
+
+        await callback.answer()
+
+
 
 # =========================
 # ВИДЕО 1
