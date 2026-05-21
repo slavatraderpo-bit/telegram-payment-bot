@@ -5,7 +5,7 @@ from aiogram.types import (
 )
 
 from aiogram.utils import executor
-
+import asyncio
 
 import os
 TOKEN = os.getenv("BOT_TOKEN")
