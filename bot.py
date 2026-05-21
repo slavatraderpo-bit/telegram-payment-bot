@@ -11,8 +11,7 @@ import asyncio
 import os
 TOKEN = os.getenv("BOT_TOKEN")
 
-# ТВОЙ USERNAME БЕЗ @
-ADMIN_USERNAME = "keysiboss"
+ADMIN_ID = 7088252933
 
 CHANNEL_ID = -1003972095670
 
@@ -534,7 +533,7 @@ async def back_to_payments(
 async def get_link(message: types.Message):
 
     # Только для тебя
-    if message.from_user.username != ADMIN_USERNAME:
+    if message.from_user.id != ADMIN_ID:
         return
 
     invite = await bot.create_chat_invite_link(
