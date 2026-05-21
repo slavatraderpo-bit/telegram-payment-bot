@@ -52,7 +52,9 @@ cursor = conn.cursor()
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
-    user_id BIGINT PRIMARY KEY
+    user_id BIGINT PRIMARY KEY,
+    avatar_minicourse BOOLEAN DEFAULT FALSE,
+    avatar_course BOOLEAN DEFAULT FALSE
 )
 """)
 
@@ -262,7 +264,7 @@ async def start(message: types.Message):
         return
 
     text = (
-        "Привет 🫵 Ты в системе.\n"
+        "🔥 Привет. Ты в системе.\n"
         "Я записал для тебя 3 коротких видео — в них вся суть метода faceless-блогинга через AI-персонажей.\n\n"
 
         "🎬 Видео 1: Как выбрать тему для блога\n"
@@ -658,6 +660,65 @@ async def support(message: types.Message):
         "Нашел проблему?",
         reply_markup=support_kb
     )
+
+# =========================
+# ВЫДАЧА МИНИКУРСА
+# =========================
+
+@dp.message_handler(commands=["paidmini"])
+async def paidmini(message: types.Message):
+
+    # Только админ
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    try:
+
+        # Получаем ID
+        args = message.get_args()
+
+        user_id = int(args)
+
+        # Отмечаем покупку
+        cursor.execute(
+            """
+            UPDATE users
+            SET avatar_minicourse = TRUE
+            WHERE user_id = %s
+            """,
+            (user_id,)
+        )
+
+        conn.commit()
+
+        # Создаем одноразовую ссылку
+        invite = await bot.create_chat_invite_link(
+            chat_id=PRIVATE_CHANNEL_ID,
+            member_limit=1
+        )
+
+        # Отправляем доступ
+        await bot.send_message(
+            user_id,
+            (
+                "✅ Оплата подтверждена!\n\n"
+                "Вот доступ к миникурсу 👇\n\n"
+                f"{invite.invite_link}"
+            )
+        )
+
+        # Ответ админу
+        await message.answer(
+            "✅ Миникурс выдан"
+        )
+
+    except Exception as e:
+
+        print(e)
+
+        await message.answer(
+            "❌ Ошибка"
+        )
 
 # =========================
 # ЗАПУСК POLLING
