@@ -11,6 +11,7 @@ from aiogram.types import (
 from aiogram.utils import executor
 import asyncio
 import os
+import psycopg2
 
 # =========================
 # ОСНОВНЫЕ НАСТРОЙКИ БОТА
@@ -34,6 +35,28 @@ PRIVATE_CHANNEL_ID = -1003974723795
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
+
+
+# =========================
+# POSTGRESQL DATABASE
+# =========================
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+conn = psycopg2.connect(
+    DATABASE_URL,
+    sslmode="require"
+)
+
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    user_id BIGINT PRIMARY KEY
+)
+""")
+
+conn.commit()
 
 # =========================
 # ХРАНЕНИЕ АНТИСПАМ ДАННЫХ
@@ -185,6 +208,16 @@ for key in PAYMENTS.keys():
 async def start(message: types.Message):
 
     user_id = message.from_user.id
+
+    cursor.execute(
+        """
+        INSERT INTO users (user_id)
+        VALUES (%s)
+        ON CONFLICT (user_id) DO NOTHING
+        """,
+        (user_id,)
+    )
+    conn.commit()
 
     try:
 
