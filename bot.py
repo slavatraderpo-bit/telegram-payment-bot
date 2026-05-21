@@ -575,8 +575,8 @@ async def payment_method(
             text="📨 Отправить пруфы",
             url=(
                 f"https://t.me/{ADMIN_USERNAME}"
-                f"?text=Привет.%20Я%20перевел,%20"
-                f"Мой ID: ID:%20{callback.from_user.id}%0A%0A"
+                f"?text=Привет.%20Я%20перевел%0A%0A"
+                f"Мой%20ID:%20{callback.from_user.id}%0A%0A"
                 f"сейчас%20предоставлю%0A%0A"
 
                 f"✅%20скриншот%20оплаты%0A"
