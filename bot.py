@@ -5,7 +5,6 @@ from aiogram.types import (
 )
 
 from aiogram.utils import executor
-import asyncio
 
 
 import os
@@ -269,15 +268,13 @@ async def video1(callback: types.CallbackQuery):
 
     user_last_click[key] = asyncio.get_event_loop().time()
 
+    await callback.answer()
+
     await bot.copy_message(
         chat_id=callback.from_user.id,
         from_chat_id=STORAGE_CHAT_ID,
         message_id=VIDEO_1_ID
     )
-
-    await callback.answer()
-
-    await asyncio.sleep(10)
 
     text2 = (
         "🔥 Красавчик, что досмотрел!\n"
@@ -324,15 +321,13 @@ async def video2(callback: types.CallbackQuery):
 
     user_last_click[key] = asyncio.get_event_loop().time()
 
+    await callback.answer()
+
     await bot.copy_message(
         chat_id=callback.from_user.id,
         from_chat_id=STORAGE_CHAT_ID,
         message_id=VIDEO_2_ID
     )
-
-    await callback.answer()
-
-    await asyncio.sleep(10)
 
     text3 = (
         "🚀 Топ! Ты уже знаешь больше, чем "
@@ -384,15 +379,13 @@ async def video3(callback: types.CallbackQuery):
 
     user_last_click[key] = asyncio.get_event_loop().time()
 
+    await callback.answer()
+
     await bot.copy_message(
         chat_id=callback.from_user.id,
         from_chat_id=STORAGE_CHAT_ID,
         message_id=VIDEO_3_ID
     )
-
-    await callback.answer()
-
-    await asyncio.sleep(10)
 
     final_text = (
         "🔥 Ну вот ты и в топ-10%.\n\n"
@@ -457,13 +450,13 @@ async def guide(callback: types.CallbackQuery):
 
     user_last_click[key] = asyncio.get_event_loop().time()
 
+    await callback.answer()
+
     await bot.send_message(
         callback.from_user.id,
         "💰 Чем будешь платить?",
         reply_markup=payment_kb
     )
-
-    await callback.answer()
 
 # =========================
 # ВЫБОР ВАЛЮТЫ
@@ -560,12 +553,6 @@ async def payment_method(
         )
 
     await callback.answer()
-
-    # =========================
-    # ЖДЕМ 10 СЕК
-    # =========================
-
-    await asyncio.sleep(10)
 
     # =========================
     # ИНСТРУКЦИЯ ПОСЛЕ ОПЛАТЫ
