@@ -1,3 +1,7 @@
+# =========================
+# ИМПОРТ БИБЛИОТЕК
+# =========================
+
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import (
     InlineKeyboardMarkup,
@@ -6,8 +10,13 @@ from aiogram.types import (
 
 from aiogram.utils import executor
 import asyncio
-
 import os
+
+# =========================
+# ОСНОВНЫЕ НАСТРОЙКИ БОТА
+# token / admin / каналы
+# =========================
+
 TOKEN = os.getenv("BOT_TOKEN")
 
 ADMIN_USERNAME = "keysiboss"
@@ -19,16 +28,25 @@ USDT_ADDRESS = "TTkHtaipHpPVFYUaJ2BbVs7RxBvss7LfFr"
 
 PRIVATE_CHANNEL_ID = -1003974723795
 
+# =========================
+# ЗАПУСК БОТА
+# =========================
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
+
+# =========================
+# ХРАНЕНИЕ АНТИСПАМ ДАННЫХ
+# =========================
 
 user_last_click = {}
 
 # =========================
-# ANTI SPAM
+# АНТИСПАМ ФУНКЦИЯ
+# защита от спама кнопок
 # =========================
 
-async def anti_spam(callback, seconds=10):
+async def anti_spam(callback, seconds=20):
 
     user_id = callback.from_user.id
 
@@ -56,7 +74,7 @@ async def anti_spam(callback, seconds=10):
     return True
 
 # =========================
-# STORAGE CHANNEL DATA
+# ID ВИДЕО И STORAGE КАНАЛА
 # =========================
 
 STORAGE_CHAT_ID = -1003924101643
@@ -66,7 +84,8 @@ VIDEO_2_ID = 7
 VIDEO_3_ID = 8
 
 # =========================
-# ОПЛАТЫ
+# НАСТРОЙКИ ОПЛАТЫ
+# цены и ссылки обменников
 # =========================
 
 PAYMENTS = {
@@ -102,7 +121,7 @@ PAYMENTS = {
 }
 
 # =========================
-# КНОПКИ ВИДЕО
+# INLINE КНОПКИ ВИДЕО
 # =========================
 
 start_kb = InlineKeyboardMarkup()
@@ -142,7 +161,8 @@ guide_kb.add(
 )
 
 # =========================
-# КНОПКИ ВАЛЮТ
+# INLINE КНОПКИ ОПЛАТЫ
+# выбор валюты
 # =========================
 
 payment_kb = InlineKeyboardMarkup(row_width=2)
@@ -157,7 +177,8 @@ for key in PAYMENTS.keys():
     )
 
 # =========================
-# START
+# КОМАНДА START
+# проверка подписки + старт воронки
 # =========================
 
 @dp.message_handler(commands=["start"])
@@ -207,10 +228,6 @@ async def start(message: types.Message):
 
         return
 
-    # =========================
-    # ОСНОВНОЙ ТЕКСТ
-    # =========================
-
     text = (
         "🔥 Привет! Ты в системе.\n"
         "Я записал для тебя 3 коротких видео — "
@@ -233,8 +250,10 @@ async def start(message: types.Message):
         reply_markup=start_kb
     )
 
+# =========================
+# ПРОВЕРКА ПОДПИСКИ
+# =========================
 
-# проверка
 @dp.callback_query_handler(
     lambda c: c.data == "check_sub"
 )
@@ -271,10 +290,8 @@ async def check_sub(callback: types.CallbackQuery):
 
         await callback.answer()
 
-
-
 # =========================
-# ВИДЕО 1
+# ОТПРАВКА ВИДЕО 1
 # =========================
 
 @dp.callback_query_handler(
@@ -313,7 +330,7 @@ async def video1(callback: types.CallbackQuery):
     )
 
 # =========================
-# ВИДЕО 2
+# ОТПРАВКА ВИДЕО 2
 # =========================
 
 @dp.callback_query_handler(
@@ -357,7 +374,7 @@ async def video2(callback: types.CallbackQuery):
     )
 
 # =========================
-# ВИДЕО 3
+# ОТПРАВКА ВИДЕО 3
 # =========================
 
 @dp.callback_query_handler(
@@ -414,7 +431,7 @@ async def video3(callback: types.CallbackQuery):
     )
 
 # =========================
-# КНОПКА РУКОВОДСТВА
+# ПОКАЗ РУКОВОДСТВА
 # =========================
 
 @dp.callback_query_handler(
@@ -434,7 +451,8 @@ async def guide(callback: types.CallbackQuery):
     )
 
 # =========================
-# ВЫБОР ВАЛЮТЫ
+# ОБРАБОТКА ОПЛАТЫ
+# выбор валюты + инструкция
 # =========================
 
 @dp.callback_query_handler(
@@ -443,20 +461,16 @@ async def guide(callback: types.CallbackQuery):
 async def payment_method(
     callback: types.CallbackQuery
 ):
-    
-    if not await anti_spam(callback, 10):
+
+    if not await anti_spam(callback, 20):
         return
-    
+
     currency = callback.data.replace(
         "pay_",
         ""
     )
 
     data = PAYMENTS[currency]
-
-    # =========================
-    # USDT
-    # =========================
 
     if currency == "₮ USDT":
 
@@ -477,10 +491,6 @@ async def payment_method(
             text,
             parse_mode="Markdown"
         )
-
-    # =========================
-    # ДРУГИЕ ВАЛЮТЫ
-    # =========================
 
     else:
 
@@ -514,10 +524,6 @@ async def payment_method(
         )
 
     await callback.answer()
-
-    # =========================
-    # ИНСТРУКЦИЯ ПОСЛЕ ОПЛАТЫ
-    # =========================
 
     support_text = (
         "✉️ После оплаты отправь:\n\n"
@@ -560,7 +566,7 @@ async def payment_method(
     )
 
 # =========================
-# ВЕРНУТЬСЯ К ОПЛАТЕ
+# ВОЗВРАТ К ВЫБОРУ ОПЛАТЫ
 # =========================
 
 @dp.callback_query_handler(
@@ -573,12 +579,13 @@ async def back_to_payments(
     await guide(callback)
 
 # =========================
-# ВЫДАЧА ОДНОРАЗОВЫХ ССЫЛОК
+# СОЗДАНИЕ ОДНОРАЗОВОЙ ССЫЛКИ
+# доступ в приватный канал
 # =========================
+
 @dp.message_handler(commands=["link"])
 async def get_link(message: types.Message):
 
-    # Только для тебя
     if message.from_user.id != ADMIN_ID:
         return
 
@@ -586,13 +593,14 @@ async def get_link(message: types.Message):
         chat_id=PRIVATE_CHANNEL_ID,
         member_limit=1
     )
+
     await message.answer(
         f"🔗 Одноразовая ссылка:\n\n"
         f"{invite.invite_link}"
     )
 
 # =========================
-# КНОПКА НАПИСАТЬ САПОРТУ
+# КНОПКА СВЯЗИ С САППОРТОМ
 # =========================
 
 @dp.message_handler(commands=["support"])
@@ -617,7 +625,8 @@ async def support(message: types.Message):
     )
 
 # =========================
-# START BOT
+# ЗАПУСК POLLING
+# старт Telegram бота
 # =========================
 
 if __name__ == "__main__":
