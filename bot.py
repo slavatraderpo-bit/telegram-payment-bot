@@ -1,3 +1,7 @@
+#link
+#paidmini
+#paidcourse
+
 # =========================
 # ИМПОРТ БИБЛИОТЕК
 # =========================
@@ -28,6 +32,7 @@ CHANNEL_ID = -1003972095670
 USDT_ADDRESS = "TTkHtaipHpPVFYUaJ2BbVs7RxBvss7LfFr"
 
 PRIVATE_CHANNEL_ID = -1003974723795
+PRIVATE_CHANNEL_ID2 = -1234567890000
 
 # =========================
 # ЗАПУСК БОТА
@@ -710,6 +715,63 @@ async def paidmini(message: types.Message):
         # Ответ админу
         await message.answer(
             "✅ Миникурс выдан"
+        )
+
+    except Exception as e:
+        print(e)
+        await message.answer(
+            "❌ Ошибка"
+        )
+
+# =========================
+# ВЫДАЧА ПОЛНОГО КУРСА
+# =========================
+
+@dp.message_handler(commands=["paidcourse"])
+async def paidcourse(message: types.Message):
+
+    # Только админ
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    try:
+
+        # Получаем ID
+        args = message.get_args()
+
+        user_id = int(args)
+
+        # Отмечаем покупку
+        cursor.execute(
+            """
+            UPDATE users
+            SET avatar_course = TRUE
+            WHERE user_id = %s
+            """,
+            (user_id,)
+        )
+
+        conn.commit()
+
+        # Создаем одноразовую ссылку
+        invite = await bot.create_chat_invite_link(
+            chat_id=PRIVATE_CHANNEL_ID2,
+            member_limit=1
+        )
+
+        # Отправляем доступ
+        await bot.send_message(
+            user_id,
+            (
+                "✅ Оплата подтверждена!\n\n"
+                "Вот доступ к полному курсу 👇\n\n"
+                f"{invite.invite_link}"
+            )
+        )
+
+        # Ответ админу
+        await message.answer(
+            "✅ Полный курс выдан"
         )
 
     except Exception as e:
