@@ -120,27 +120,27 @@ VIDEO_3_ID = 8
 
 PAYMENTS = {
     "🇷🇺 RUB": {
-        "price": "1299₽",
+        "price": "1199 рублей",
         "link": "https://sberbit.vip/exchange-cardrub-to-trc20/"
     },
 
     "🇺🇦 UAH": {
-        "price": "699₴",
+        "price": "699 гривен",
         "link": "https://coinfusion.one/exchange_CARDUAH_to_USDTTRC/"
     },
 
     "🇰🇿 KZT": {
-        "price": "7999₸",
+        "price": "7499 тенге",
         "link": "https://metka.cc/?cur_from=CARDKZT&cur_to=USDTTRC20"
     },
 
     "🇺🇸 USD": {
-        "price": "35$",
+        "price": "35 долларов",
         "link": "https://fastchange.me/change/visamastercard_usd-itez_usdt_trc20"
     },
 
     "🇪🇺 EUR": {
-        "price": "30€",
+        "price": "30 евро",
         "link": "https://fastchange.me/change/visamastercard_eur-itez_usdt_trc20"
     },
 
@@ -538,7 +538,7 @@ async def payment_method(
     else:
 
         text = (
-            f"💰 Для этой валюты нужно отправить — {data['price']}\n\n"
+            f"💰 Отправь — {data['price']}\n\n"
 
             f"✅ На адрес USDT TRC-20. Скопируй его в один клик👇\n\n"
 
@@ -547,7 +547,9 @@ async def payment_method(
             f"✅ Нажми кнопку - Оплатить\n\n"
             f"✅ Когда увидешь что оплата выполнена, сохрани ссылку на перевод\n\n"
 
-            f"‼️ Перепроверь сумму и адрес вывода USDT TRC20. Все легко, но иногда можно ошибиться и потерять деньги"
+            f"‼️ Перепроверь сумму и адрес вывода USDT TRC20. Все легко, но иногда можно ошибиться и потерять деньги\n\n"
+            
+            f"⚠️ По любой проблеме с оплатой - напиши в саппорт через меню"
         )
 
         pay_kb = InlineKeyboardMarkup(row_width=1)
